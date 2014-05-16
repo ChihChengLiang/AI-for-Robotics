@@ -502,16 +502,8 @@ def run(grid, goal, spath, params, printflag = False, speed = 0.1, timeout = 100
             dx=x2-x1
             dy=y2-y1
             u=(Rx*dx+Ry*dy)/(dx**2+dy**2)
-            if u>=1:
-                index+=1
-                x1=spath[index][0]
-                y1=spath[index][1]
-                x2=spath[index+1][0]
-                y2=spath[index+1][1]
-                Rx=estimate[0]-x1
-                Ry=estimate[1]-y1
-                dx=x2-x1
-                dy=y2-y1
+            if u>=1: index+=1
+                
             cte=(Ry*dx-Rx*dy)/(dx**2+dy**2)
             #print estimate,cte
 
