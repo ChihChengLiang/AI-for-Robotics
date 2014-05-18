@@ -566,7 +566,48 @@ def online_slam(data, N, num_landmarks, motion_noise, measurement_noise):
     # Enter your code here!
     #
     #
-    return mu, Omega # make sure you return both of these matrices to be marked correct.
+    matLen=(1+num_landmarks)*2 # map contains only recent pose and map
+    omega=matrix([[1.0,0.0],
+                  [0.0,1.0]])
+    omega=omega.expand(matLen,matLen,[0,1])
+    xi=matrix([[50.0],
+               [50.0]])
+    xi=xi.expand(matLen,1,[0,1],[0])
+    mo=1.0/motion_noise
+    a_mo=matrix([[mo, -mo],
+                 [-mo,mo]])
+    me=1.0/measurement_noise
+    a_me=matrix([[me, -me],
+                 [-me,me]])
+    for i in range(len(data)):
+        d=data[i]
+        for landmark in d[0]:
+            lmLabel=landmark[0]
+            for j in range(2): # deal with the x and y landmark position
+                MatPos=[j,((-num_landmarks+lmLabel)*2+j) % matLen]
+                omega+=a_me.expand(matLen,matLen,MatPos)
+                b=matrix([[-landmark[j+1]*me],[landmark[j+1]*me]])
+                xi+=b.expand(matLen,1,MatPos,[0])
+        newLen=(2+num_landmarks)*2
+        pos=[0,1]
+        pos.extend(range(4,newLen))
+        omega=omega.expand(newLen,newLen,pos)
+        xi=xi.expand(newLen,1,pos,[0])
+        for k in range(2):
+            di=d[1][k] # dx or dy
+            MatPos=[k,2+k]
+            omega+=a_mo.expand(newLen,newLen,MatPos)
+            b=matrix([[-di*mo],[di*mo]])
+            xi+=b.expand(newLen,1,MatPos,[0])
+        A=omega.take([0,1],range(2,newLen))
+        B=omega.take([0,1])
+        C=xi.take([0,1],[0])
+        omega=omega.take(range(2,newLen))-A.transpose()*B.inverse()*A
+        xi=xi.take(range(2,newLen),[0])-A.transpose()*B.inverse()*C
+    #import pdb;pdb.set_trace()
+    
+    mu=omega.inverse()*xi
+    return mu, omega # make sure you return both of these matrices to be marked correct.
 
 # --------------------------------
 #
