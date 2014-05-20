@@ -40,7 +40,35 @@ import random
 
 def next_move(hunter_position, hunter_heading, target_measurement, max_distance, OTHER = None):
     # This function will be called after each time the target moves. 
-
+    """Estimate the next (x, y) position of the wandering Traxbot
+    based on noisy (x, y) measurements."""
+    # In this approach, I try to estimate the center of the circle, average turning angle, and starting angle. This performace is better
+    if not OTHER: # this is the first measurement
+        OTHER = [target_measurement]
+        xy_estimate = target_measurement
+    elif len(OTHER)<2:
+        OTHER.append(target_measurement)
+        xy_estimate = target_measurement
+    else:
+        OTHER.append(target_measurement)
+        N=len(OTHER)
+        center= sum([x for x,y in OTHER])/N, sum([y for x,y in OTHER])/N
+        avgRadius=sum([distance_between(m,center) for m in OTHER])/N
+        avgTurn=0
+        xc,yc=center
+        angles=[atan2(y-yc,x-xc) for x,y in OTHER]
+        avgTurn=sum([(angles[i]-angles[i-1])%(2*pi) for i in range(1,N)])/ (N-1)
+        startAngle=sum([(angles[j]-j*avgTurn)%(2*pi) for j in range(len(angles))])/N
+        newAngle=startAngle+N*avgTurn
+        xy_estimate=(xc+avgRadius*cos(newAngle), yc+avgRadius*sin(newAngle))
+        
+    heading_to_target = get_heading(hunter_position, xy_estimate)
+    heading_difference = heading_to_target - hunter_heading
+    turning =  heading_difference # turn towards the target
+    distance=distance_between(hunter_position,xy_estimate)
+    #if distance>max_distance: print "%f %d t:%f,%f xy:%f,%f hp:%f,%f" % (distance,len(OTHER), target_measurement[0],target_measurement[1], xy_estimate[0],xy_estimate[1], hunter_position[0],hunter_position[1])
+#    if len(OTHER)>=20: print "center:%f,%f R:%f T:%f sA:%f xy:%f,%f hp:%f,%f" % (center[0],center[1], avgRadius,avgTurn/pi*180,startAngle/pi*180,xy_estimate[0],xy_estimate[1],hunter_position[0],hunter_position[1])
+#    if len(OTHER)>40: import pdb; pdb.set_trace()
     # The OTHER variable is a place for you to store any historical information about
     # the progress of the hunt (or maybe some localization information). Your return format
     # must be as follows in order to be graded properly.
@@ -129,15 +157,15 @@ def naive_next_move(hunter_position, hunter_heading, target_measurement, max_dis
     distance = max_distance # full speed ahead!
     return turning, distance, OTHER
 
-# target = robot(0.0, 10.0, 0.0, 2*pi / 30, 1.5)
-# measurement_noise = .05*target.distance
-# target.set_noise(0.0, 0.0, measurement_noise)
+target = robot(0.0, 10.0, 0.0, 2*pi / 30, 1.5)
+measurement_noise = .05*target.distance
+target.set_noise(0.0, 0.0, measurement_noise)
 
-# hunter = robot(-10.0, -10.0, 0.0)
+hunter = robot(-10.0, -10.0, 0.0)
+
+print demo_grading(hunter, target, next_move)
+
 
 # print demo_grading(hunter, target, naive_next_move)
-
-
-
 
 
