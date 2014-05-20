@@ -40,6 +40,7 @@ import random
 def estimate_next_pos(measurement, OTHER = None):
     """Estimate the next (x, y) position of the wandering Traxbot
     based on noisy (x, y) measurements."""
+    # In this approach, I try to estimate the center of the circle, average turning angle, and starting angle. This performace is better
     if not OTHER: # this is the first measurement
         OTHER = [measurement]
         xy_estimate = measurement
